@@ -3,34 +3,26 @@ package ku.piii.music;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import ku.piii.marshalling.MarshallingSupport;
-import ku.piii.model.MusicMedia;
+
+import ku.piii.model.MusicMediaCollection;
 import ku.piii.mp3.MP3PathToMusicMapper;
 import ku.piii.nio.file.SimpleMp3FileVisitor;
-import ku.piii.nio.file.TextFileStore;
-import ku.piii.nio.file.TextFileStoreImpl;
 
 
 public class MusicServiceImpl implements MusicService {
 
     private final MusicRepository musicRepository;
     private final MP3PathToMusicMapper mapper;
-    private final MarshallingSupport marshallSupport;
-    private final TextFileStore tfs;
 
-    public MusicServiceImpl(final MusicRepository musicRepository, MP3PathToMusicMapper myMapper, MarshallingSupport ms) {
+    public MusicServiceImpl(final MusicRepository musicRepository, MP3PathToMusicMapper myMapper) {
         this.musicRepository = musicRepository;
-        this.mapper = myMapper;
-        this.marshallSupport = ms;
-        this.tfs = new TextFileStoreImpl();
+        this.mapper = myMapper;        
     }
 
     @Override
-    public void addAllMp3Media(final Path root) {
-        
+    public MusicMediaCollection createMusicMediaCollection(final Path root) {        
         SimpleMp3FileVisitor myVisitor = new SimpleMp3FileVisitor();
         
         try {
@@ -39,27 +31,22 @@ public class MusicServiceImpl implements MusicService {
             Logger.getLogger(MusicServiceImpl.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        for (Path p : myVisitor.getListOfMP3Files()) {
-            MusicMedia m = mapper.mapPath(p);
-            musicRepository.addItem(m);
+        final MusicMediaCollection collection = new MusicMediaCollection();
+        for (Path p : myVisitor.getListOfMP3Files()) {            
+            collection.addMusicMedia(mapper.mapPath(p));            
         }
         
+        return collection;
     }
 
     @Override
-    public List<MusicMedia> listMusicMedia() {
-        return musicRepository.getItems();
+    public MusicMediaCollection loadMusicMediaCollection(final Path fileToLoad) {
+        return musicRepository.loadCollection(fileToLoad);
     }
 
     @Override
-    public void saveToFile(Path fileToSave) {
-        String objectMarshall = marshallSupport.marshal(this);
-        this.tfs.saveText(objectMarshall, fileToSave);
-    }
-
-    @Override
-    public MusicService loadFromFile(Path fileToLoad) {
-        return marshallSupport.unmarshal(this.tfs.loadText(fileToLoad), this.getClass());
+    public void saveMusicMediaCollection(final Path fileToSave, final MusicMediaCollection collection) {
+    	musicRepository.save(fileToSave, collection);
     }
 
 }

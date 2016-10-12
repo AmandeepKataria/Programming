@@ -1,10 +1,10 @@
 package ku.piii.music;
 
-import java.util.List;
+import java.nio.file.Path;
 
-import ku.piii.model.MusicMedia;
+import ku.piii.model.MusicMediaCollection;
 
 public interface MusicRepository{
-    public List<MusicMedia> getItems();    
-    public void addItem(final MusicMedia thisItem);
+    public MusicMediaCollection loadCollection(final Path file);    
+    public void save(final Path fileToSave, final MusicMediaCollection musicMediaCollection);
 }

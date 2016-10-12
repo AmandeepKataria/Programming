@@ -1,23 +1,31 @@
 package ku.piii.music;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.Path;
 
-import ku.piii.model.MusicMedia;
+import ku.piii.marshalling.MarshallingSupport;
+import ku.piii.model.MusicMediaCollection;
+import ku.piii.nio.file.TextFileStore;
 
 public class MusicRepositoryImpl implements MusicRepository{
-
-    private List<MusicMedia> musicItems;
 	
-    public MusicRepositoryImpl() {
-        this.musicItems = new ArrayList();
-    }
+	private MarshallingSupport marshallingSupport;
+	private TextFileStore textFileStore;
+	
+	public MusicRepositoryImpl(final MarshallingSupport ms, final TextFileStore fileStore){
+		this.marshallingSupport = ms;
+		this.textFileStore = fileStore;
+	}
 
-    public List<MusicMedia> getItems() {
-        return musicItems;
-    }
-    
-    public void addItem(MusicMedia thisItem) {
-        this.musicItems.add(thisItem);
-    }
+	@Override
+	public MusicMediaCollection loadCollection(final Path file) {
+		final String loadText = textFileStore.loadText(file);
+		return marshallingSupport.unmarshal(loadText, MusicMediaCollection.class);
+	}
+
+	@Override
+	public void save(Path path, MusicMediaCollection musicMediaCollection) {
+		final String jsonMusicCollection = marshallingSupport.marshal(musicMediaCollection);
+		textFileStore.saveText(jsonMusicCollection, path);
+	}
+
 }
